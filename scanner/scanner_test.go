@@ -33,6 +33,11 @@ func TestScanner(t *testing.T) {
 			{Type: LessEqual, Lexeme: "<=", Line: 1},
 			{Type: EqualEqual, Lexeme: "==", Line: 1},
 		}},
+		{name: "string_and_numbers", input: "231231\"Привет\"312.21", want: []Token{
+			{Type: Number, Lexeme: "231231", Line: 1, Literal: Literal{Number: 231231}},
+			{Type: String, Lexeme: "Привет", Line: 1, Literal: Literal{String: "Привет"}},
+			{Type: Number, Lexeme: "312.21", Line: 1, Literal: Literal{Number: 312.21}},
+		}},
 	}
 
 	for _, tc := range tests {

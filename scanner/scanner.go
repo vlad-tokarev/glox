@@ -4,6 +4,8 @@ import (
 	"errors"
 	"fmt"
 	"github.com/vlad-tokarev/glox/error_reporter"
+	"strconv"
+	"unicode"
 )
 
 var (
@@ -12,16 +14,7 @@ var (
 	errIgnoredCharacter    = errors.New("scanner: ignored character")
 )
 
-type LiteralType = string
-
-const (
-	LiteralNumber = "LITERAL_NUMBER"
-	LiteralString = "LITERAL_STRING"
-	LiteralNil    = "LITERAL_NIL"
-)
-
 type Literal struct {
-	Type   LiteralType
 	Number float64
 	String string
 }
@@ -141,27 +134,12 @@ func (s *Scanner) scanToken() (Token, error) {
 		return Token{}, errIgnoredCharacter
 	case '"':
 		return s.scanString()
+	case '0', '1', '2', '3', '4', '5', '6', '7', '8', '9':
+		return s.scanNumber()
 	}
 
-	error_reporter.Print(int(s.line), "Unexpected character.")
+	error_reporter.Print(int(s.line), fmt.Sprintf("Unexpected character: %s", string(c)))
 	return Token{}, errUnexpectedCharacter
-}
-
-func (s *Scanner) isAtEnd() bool {
-	return s.current >= int64(len(s.source))
-}
-
-func (s *Scanner) advance() rune {
-	s.current++
-	return s.source[s.current-1]
-}
-
-func (s *Scanner) peek() rune {
-	if s.isAtEnd() {
-		return 0
-	}
-
-	return s.source[s.current]
 }
 
 func (s *Scanner) scanString() (Token, error) {
@@ -182,22 +160,34 @@ func (s *Scanner) scanString() (Token, error) {
 
 	value := string(s.source[s.start+1 : s.current-1])
 
-	return Token{Type: LiteralString, Lexeme: value, Line: s.line, Literal: Literal{
-		Type:   LiteralString,
+	return Token{Type: String, Lexeme: value, Line: s.line, Literal: Literal{
 		String: value,
 	}}, nil
 
 }
 
-func (s *Scanner) match(expected rune) bool {
-	if s.isAtEnd() {
-		return false
+func (s *Scanner) scanNumber() (Token, error) {
+	for unicode.IsDigit(s.peek()) {
+		s.advance()
 	}
 
-	if s.source[s.current] != expected {
-		return false
+	if s.peek() == '.' && unicode.IsDigit(s.peekNext()) {
+		// consume the "."
+		s.advance()
+
+		for unicode.IsDigit(s.peek()) {
+			s.advance()
+		}
 	}
 
-	s.current++
-	return true
+	value := string(s.source[s.start:s.current])
+	token := Token{
+		Type:    Number,
+		Lexeme:  value,
+		Literal: Literal{},
+		Line:    s.line,
+	}
+	var err error
+	token.Literal.Number, err = strconv.ParseFloat(value, 64)
+	return token, err
 }
