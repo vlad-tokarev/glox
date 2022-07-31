@@ -38,6 +38,12 @@ func TestScanner(t *testing.T) {
 			{Type: String, Lexeme: "Привет", Line: 1, Literal: Literal{String: "Привет"}},
 			{Type: Number, Lexeme: "312.21", Line: 1, Literal: Literal{Number: 312.21}},
 		}},
+		{name: "identifiers_and_keywords", input: "var a = \"hello\"", want: []Token{
+			{Type: Var, Lexeme: "var", Line: 1},
+			{Type: Identifier, Lexeme: "a", Line: 1},
+			{Type: Equal, Lexeme: "=", Line: 1},
+			{Type: String, Lexeme: "hello", Line: 1, Literal: Literal{String: "hello"}},
+		}},
 	}
 
 	for _, tc := range tests {

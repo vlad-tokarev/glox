@@ -136,6 +136,10 @@ func (s *Scanner) scanToken() (Token, error) {
 		return s.scanString()
 	case '0', '1', '2', '3', '4', '5', '6', '7', '8', '9':
 		return s.scanNumber()
+	default:
+		if unicode.IsLetter(c) || c == '_' {
+			return s.scanIdentifier()
+		}
 	}
 
 	error_reporter.Print(int(s.line), fmt.Sprintf("Unexpected character: %s", string(c)))
@@ -190,4 +194,51 @@ func (s *Scanner) scanNumber() (Token, error) {
 	var err error
 	token.Literal.Number, err = strconv.ParseFloat(value, 64)
 	return token, err
+}
+
+func (s *Scanner) scanIdentifier() (Token, error) {
+	for unicode.IsLetter(s.peek()) || unicode.IsDigit(s.peek()) || s.peek() == '_' {
+		s.advance()
+	}
+
+	value := string(s.source[s.start:s.current])
+
+	token := Token{Type: Identifier, Lexeme: string(s.source[s.start:s.current]), Line: s.line}
+
+	switch value {
+	case "and":
+		token.Type = And
+	case "class":
+		token.Type = Class
+	case "else":
+		token.Type = Else
+	case "false":
+		token.Type = False
+	case "for":
+		token.Type = For
+	case "fun":
+		token.Type = Fun
+	case "if":
+		token.Type = If
+	case "nil":
+		token.Type = Nil
+	case "or":
+		token.Type = Or
+	case "print":
+		token.Type = Print
+	case "return":
+		token.Type = Return
+	case "super":
+		token.Type = Super
+	case "this":
+		token.Type = This
+	case "true":
+		token.Type = True
+	case "var":
+		token.Type = Var
+	case "while":
+		token.Type = While
+	}
+
+	return token, nil
 }
